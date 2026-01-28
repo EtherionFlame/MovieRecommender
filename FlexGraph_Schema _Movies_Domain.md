@@ -37,3 +37,11 @@ Properties: None
 From: Movie → Genre
 Properties:
 - is_primary (boolean) - true for main genre, false for secondary
+
+### Studio
+- tmdb_id (integer, unique)
+- name (string)
+
+### PRODUCED_BY
+From: Movie → Studio
+Properties: None
