@@ -43,7 +43,6 @@ def log_failed_movie(movie_id, error_message):
         error_message: Why it failed
 
     """
-
-# TODO: Append to failed_movies.txt
-# with open('data/failed_movies.txt', 'a') as f:
-#     f.write(f"{movie_id}|{error_message}\n")
+    os.makedirs('data', exist_ok=True)
+    with open('data/failed_movies.txt', 'a') as f:
+        f.write(f"{movie_id}|{error_message}\n")
