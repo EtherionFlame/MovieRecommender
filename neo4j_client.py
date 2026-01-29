@@ -1,23 +1,88 @@
 from neo4j import GraphDatabase
 from config import NEO4J_PASSWORD, NEO4J_URI, NEO4J_USER
+from logger import setup_logger
+
+
+logger = setup_logger(__name__)
 
 def get_driver():
     driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER,NEO4J_PASSWORD))
     return driver
 
-def create_movie_node(???, ???):
+def create_movie_node(session, movie_data):
     """
+    Create or update a Movie node in Neo4j
+    
+    Args:
+        session: Active Neo4j session
+        movie_data (dict): Movie data from fetch_movie_details()
+            Required keys: tmdb_id, title, release_year, rating
+            Optional keys: budget, revenue, overview, poster_url
+    
+    Returns:
+        bool: True if successful, False if error occurred
+    """"""
     Your docstring here
     """
-    query="""
-    MERGE (m:Movie {tmdb_id: $tmdb_id})
-    SET m.title = $title,
-        m.rating = $rating,
-        m.release_year = $release_year
-        m.budget
-    """
+    try:
+        logger.debug(f"Creating movie node from data: {movie_data.get('title')}")
+        tmdb_id = movie_data.get('tmdb_id')
+        if not tmdb_id:
+            logger.error("Cannot create movie node: missing tmdb_id")
+        title = movie_data.get('title')
+        rating = movie_data.get('rating')
+        release_year = movie_data.get('release_year')
+        budget = movie_data.get('budget')  or 0
+        revenue = movie_data.get('revenue') or 0
+        overview = movie_data.get('overview')
+        poster_url = movie_data.get('poster_url')
+        parameters = {
+            'tmdb_id': tmdb_id,
+            'title': title,
+            'rating':rating,
+            'release_year':release_year,
+            'budget':budget,
+            'revenue':revenue,
+            'overview':overview,
+            'poster_url':poster_url
+         }   
+        query="""
+        MERGE (m:Movie {tmdb_id: $tmdb_id})
+        SET m.title = $title,
+            m.rating = $rating,
+            m.release_year = $release_year,
+            m.budget = $budget,
+            m.revenue = $revenue,
+            m.overview = $overview,
+            m.poster_url=$poster_url
+        """
+        session.run(query, parameters)
+
+        logger.info(f"Successfully created movie node for '{title}' (ID: {tmdb_id})")
+
+        return True
+    except Exception as e:
+        logger.error(f"Failed to create movie node: {e}")
+        return False
     pass
+
 if __name__ == "__main__":
-    driver = get_driver()
-    print("Driver created successfully!")
+    
+    test_movie = {
+        'tmdb_id': 550,
+        'title': 'Fight Club',
+        'release_year': 1999,
+        'rating': 8.4,
+        'budget': 63000000,
+        'revenue': 100853753,
+        'overview': 'A test overview',
+        'poster_url': 'https://test.jpg'
+    }
+    
+    driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
+    
+    with driver.session() as session:
+        success = create_movie_node(session, test_movie)
+        print(f"Success: {success}")
+    
     driver.close()

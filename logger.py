@@ -22,6 +22,7 @@ def setup_logger(name='Flexgraph-Movie'):
     console_handler = logging.StreamHandler()
     console_handler.setLevel(logging.INFO)
     console_handler.setFormatter(formatter)
+    os.makedirs('logs', exist_ok=True)  # Create logs folder if it doesn't exist
     file_handler = RotatingFileHandler(
         'logs/ingest.log',
         maxBytes=5*1024*1024,   #5MB
