@@ -1,10 +1,7 @@
-import requests
-from config import TMDB_API_KEY
-from tmdb_client import fetch_genres, fetch_popular_movies, fetch_movie_details
-import requests
-from config import TMDB_API_KEY
-from tmdb_client import fetch_movie_credits
 import json
+import requests
+from config import TMDB_API_KEY
+from tmdb_client import fetch_genres, fetch_popular_movies, fetch_movie_details, fetch_movie_credits
 
 credits = fetch_movie_credits(550, max_cast=5)
 print(json.dumps(credits, indent=2))
