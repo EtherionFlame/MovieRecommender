@@ -205,27 +205,3 @@ def fetch_movie_credits(movie_id, max_cast=10):
     movie_credits['cast']=cast
     movie_credits['directors']=directors
     return movie_credits
-    # TODO 2: Make request
-    
-    # TODO 3: Check status code, return None on error
-    
-    # TODO 4: Parse JSON
-    
-    # TODO 5: Process cast (limit to max_cast)
-    #         For each actor, extract:
-    #         - tmdb_id (from 'id')
-    #         - name
-    #         - profile_url (build from profile_path, handle None)
-    #         - character
-    #         - order
-    
-    # TODO 6: Process crew to find directors
-    #         Filter crew where job == 'Director'
-    #         For each director, extract:
-    #         - tmdb_id (from 'id')
-    #         - name
-    #         - profile_url (build from profile_path, handle None)
-    
-    # TODO 7: Log if no director found (this can happen!)
-    
-    # TODO 8: Return dict with 'cast' and 'directors' lists

@@ -64,7 +64,43 @@ def create_movie_node(session, movie_data):
     except Exception as e:
         logger.error(f"Failed to create movie node: {e}")
         return False
-    pass
+
+def create_person_node(session, person_data):
+    """
+    Create or update a Person node in Neo4j
+    
+    Args:
+        session: Active Neo4j session
+        person_data (dict): Person data with keys: tmdb_id, name, profile_url
+    
+    Returns:
+        bool: True if successful, False if error occurred
+    """
+    try:
+        logger.debug(f"Creating person node from data: {person_data.get('name')}")
+        tmdb_id = person_data.get('tmdb_id')
+        if not tmdb_id:
+            logger.error("Cannot create movie node: missing tmdb_id")
+        name = person_data.get('name')
+        profile_url = person_data.get('profile_url')
+        paramaters = {
+            tmdb_id,
+            name,
+            profile_url,
+        }
+        query = """
+        MERGE (p:Person{tmdb_id: $tmdb_id})
+        SET m.name = $name,
+            m.profile_url = $profile_url
+        """
+        session.run(query,paramaters)
+        logger.info(f"Successfully created movie node for '{title}' (ID: {tmdb_id})")
+
+        return True
+    except Exception as e:
+        logger.error(f"Failed to create Person node: {e}")
+        return False
+
 
 if __name__ == "__main__":
     
