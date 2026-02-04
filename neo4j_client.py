@@ -21,14 +21,13 @@ def create_movie_node(session, movie_data):
     
     Returns:
         bool: True if successful, False if error occurred
-    """"""
-    Your docstring here
     """
     try:
         logger.debug(f"Creating movie node from data: {movie_data.get('title')}")
         tmdb_id = movie_data.get('tmdb_id')
         if not tmdb_id:
             logger.error("Cannot create movie node: missing tmdb_id")
+            return False
         title = movie_data.get('title')
         rating = movie_data.get('rating')
         release_year = movie_data.get('release_year')
@@ -81,26 +80,91 @@ def create_person_node(session, person_data):
         tmdb_id = person_data.get('tmdb_id')
         if not tmdb_id:
             logger.error("Cannot create movie node: missing tmdb_id")
+            return False
         name = person_data.get('name')
         profile_url = person_data.get('profile_url')
-        paramaters = {
-            tmdb_id,
-            name,
-            profile_url,
+        parameters = {
+            'tmdb_id': tmdb_id,
+            'name': name,
+            'profile_url' : profile_url
         }
         query = """
         MERGE (p:Person{tmdb_id: $tmdb_id})
-        SET m.name = $name,
-            m.profile_url = $profile_url
+        SET p.name = $name,
+            p.profile_url = $profile_url
         """
-        session.run(query,paramaters)
-        logger.info(f"Successfully created movie node for '{title}' (ID: {tmdb_id})")
+        session.run(query,parameters)
+        logger.info(f"Successfully created person node for '{name}' (ID: {tmdb_id})")
 
         return True
     except Exception as e:
         logger.error(f"Failed to create Person node: {e}")
         return False
+    
+def create_genre_node(session, genre_data):
+    """
+    Create or update a Genre node in Neo4j
+    
+    Args:
+        session: Active Neo4j session
+        genre_data (dict): Genre data with keys: id, name
+    
+    Returns:
+        bool: True if successful, False if error occurred
+    """
+    try:
+        logger.debug(f"Creating person node from data: {genre_data.get('name')}")
+        name = genre_data.get('name')
+        if not name:
+            logger.error("Cannot create Genre node: missing name")
+            return False
+        parameters = {
+            'name': name
+        }
+        query = """
+        MERGE (g:Genre{name: $name})
+        """
+        session.run(query,parameters)
+        logger.info(f"Successfully created Genre node for '{name}' (ID: {id})")
 
+        return True
+    except Exception as e:
+        logger.error(f"Failed to create Genre node: {e}")
+        return False
+
+def create_studio_node(session, studio_data):
+    """
+    Create or update a Studio node in Neo4j
+    
+    Args:
+        session: Active Neo4j session
+        genre_data (dict): Studio data with keys: id, name
+    
+    Returns:
+        bool: True if successful, False if error occurred
+    """
+    try:
+        logger.debug(f"Creating Studio node from data: {studio_data.get('name')}")
+        id = studio_data.get('id')
+        if not id:
+            logger.error("Cannot create Studio node: No Id")
+            return False
+        name = studio_data.get('name')
+        parameters = {
+            'id':id,
+            'name':name
+        }
+        query = """
+        MERGE (s:Studio{id: $id})
+        SET s.name = $name
+        """
+        session.run(query,parameters)
+        logger.info(f"Successfully created studio node '{name}' (ID: {id})")
+
+        return True
+    except Exception as e:
+        logger.error(f"Failed to create Studio node: {e}")
+        return False
 
 if __name__ == "__main__":
     
@@ -115,10 +179,39 @@ if __name__ == "__main__":
         'poster_url': 'https://test.jpg'
     }
     
-    driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
+    test_person = {
+        'tmdb_id': 819,
+        'name': 'Edward Norton',
+        'profile_url': 'https://example.com/norton.jpg'
+    }
+    
+    test_genre = {
+        'name': 'Action'
+    }
+    
+    test_studio = {
+        'id': 711,
+        'name': 'Fox 2000 Pictures'
+    }
+    
+    driver = get_driver()
     
     with driver.session() as session:
+        print("Testing movie node...")
         success = create_movie_node(session, test_movie)
-        print(f"Success: {success}")
+        print(f"Movie: {success}")
+        
+        print("\nTesting person node...")
+        success = create_person_node(session, test_person)
+        print(f"Person: {success}")
+        
+        print("\nTesting genre node...")
+        success = create_genre_node(session, test_genre)
+        print(f"Genre: {success}")
+        
+        print("\nTesting studio node...")
+        success = create_studio_node(session, test_studio)
+        print(f"Studio: {success}")
     
     driver.close()
+    print("\n✅ Check Neo4j Browser to verify!")
