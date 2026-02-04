@@ -330,104 +330,76 @@ def create_produced_by_relationship(session, studio_id, movie_tmdb_id):
 
 
 if __name__ == "__main__":
-    """
-    Code to test node creation functions
-
-
-    test_movie = {
-        'tmdb_id': 550,
-        'title': 'Fight Club',
-        'release_year': 1999,
-        'rating': 8.4,
-        'budget': 63000000,
-        'revenue': 100853753,
-        'overview': 'A test overview',
-        'poster_url': 'https://test.jpg'
-    }
-    
-    test_person = {
-        'tmdb_id': 819,
-        'name': 'Edward Norton',
-        'profile_url': 'https://example.com/norton.jpg'
-    }
-    
-    test_genre = {
-        'name': 'Action'
-    }
-    
-    test_studio = {
-        'id': 711,
-        'name': 'Fox 2000 Pictures'
-    }
+    print("\n=== COMPREHENSIVE TEST: Fight Club ===\n")
     
     driver = get_driver()
     
     with driver.session() as session:
-        print("Testing movie node...")
-        success = create_movie_node(session, test_movie)
-        print(f"Movie: {success}")
-        
-        print("\nTesting person node...")
-        success = create_person_node(session, test_person)
-        print(f"Person: {success}")
-        
-        print("\nTesting genre node...")
-        success = create_genre_node(session, test_genre)
-        print(f"Genre: {success}")
-        
-        print("\nTesting studio node...")
-        success = create_studio_node(session, test_studio)
-        print(f"Studio: {success}")
-    
-    driver.close()
-    print("\n✅ Check Neo4j Browser to verify!")
-    """
-
-    print("\n--- Testing Relationship ---")
-    driver = get_driver()
-
-    with driver.session() as session:
-        """# Create David Fincher node FIRST (if it doesn't exist)
-        print("Creating David Fincher node...")
-        fincher_data = {
-            'tmdb_id': 7467,
-            'name': 'David Fincher',
-            'profile_url': 'https://example.com/fincher.jpg'
+        # 1. Create Movie
+        print("1. Creating Movie node...")
+        movie = {
+            'tmdb_id': 550,
+            'title': 'Fight Club',
+            'release_year': 1999,
+            'rating': 8.4,
+            'budget': 63000000,
+            'revenue': 100853753,
+            'overview': 'An insomniac office worker and a devil-may-care soap maker form an underground fight club.',
+            'poster_url': 'https://image.tmdb.org/t/p/w500/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg'
         }
-        success = create_person_node(session, fincher_data)
-        print(f"David Fincher node: {success}")
+        create_movie_node(session, movie)
         
-        # Now create the relationship
-        print("\nCreating DIRECTED relationship...")
-        success = create_directed_relationship(
-            session,
-            person_tmdb_id=7467,
-            movie_tmdb_id=550
-        )
-        print(f"DIRECTED relationship: {success}")
-        drama_genre = {'name': 'Drama'}
-        create_genre_node(session, drama_genre)
-
-        # Then create the relationship
-        success = create_in_genre_relationship(
-            session,
-            movie_tmdb_id=550,
-            genre_name='Drama',
-            is_primary=True
-        )
-        print(f"IN_GENRE relationship: {success}")"""
-        print("\n--- Testing IN_GENRE Relationship ---")
-
-        # Create Drama genre first
-        drama_genre = {'name': 'Drama'}
-        create_genre_node(session, drama_genre)
-
-        # Create relationship
-        success = create_in_genre_relationship(
-            session,
-            movie_tmdb_id=550,
-            genre_name='Drama',
-            is_primary=True
-        )
-        print(f"IN_GENRE relationship: {success}")
+        # 2. Create Genres
+        print("\n2. Creating Genre nodes...")
+        genres = [
+            {'name': 'Drama'},
+            {'name': 'Thriller'},
+            {'name': 'Comedy'}
+        ]
+        for genre in genres:
+            create_genre_node(session, genre)
+        
+        # 3. Create Studios
+        print("\n3. Creating Studio nodes...")
+        studios = [
+            {'id': 711, 'name': 'Fox 2000 Pictures'},
+            {'id': 508, 'name': 'Regency Enterprises'},
+            {'id': 20555, 'name': 'Taurus Film'}
+        ]
+        for studio in studios:
+            create_studio_node(session, studio)
+        
+        # 4. Create People (Actors + Director)
+        print("\n4. Creating Person nodes...")
+        people = [
+            {'tmdb_id': 819, 'name': 'Edward Norton', 'profile_url': 'https://image.tmdb.org/t/p/w500/5XBzD5WuTyVQZeS4VI25z2moMeY.jpg'},
+            {'tmdb_id': 287, 'name': 'Brad Pitt', 'profile_url': 'https://image.tmdb.org/t/p/w500/oTB9vGIBacH5aQNS0pUM74QSWPl.jpg'},
+            {'tmdb_id': 7467, 'name': 'David Fincher', 'profile_url': 'https://image.tmdb.org/t/p/w500/tpEczFclQZeKAiCeKZZ0adRvtfz.jpg'}
+        ]
+        for person in people:
+            create_person_node(session, person)
+        
+        # 5. Create ACTED_IN relationships
+        print("\n5. Creating ACTED_IN relationships...")
+        create_acted_in_relationship(session, 819, 550, 'Narrator', 0)
+        create_acted_in_relationship(session, 287, 550, 'Tyler Durden', 1)
+        
+        # 6. Create DIRECTED relationship
+        print("\n6. Creating DIRECTED relationship...")
+        create_directed_relationship(session, 7467, 550)
+        
+        # 7. Create IN_GENRE relationships
+        print("\n7. Creating IN_GENRE relationships...")
+        create_in_genre_relationship(session, 550, 'Drama', is_primary=True)
+        create_in_genre_relationship(session, 550, 'Thriller', is_primary=False)
+        create_in_genre_relationship(session, 550, 'Comedy', is_primary=False)
+        
+        # 8. Create PRODUCED_BY relationships
+        print("\n8. Creating PRODUCED_BY relationships...")
+        create_produced_by_relationship(session, 550, 711)
+        create_produced_by_relationship(session, 550, 508)
+        create_produced_by_relationship(session, 550, 20555)
+    
     driver.close()
+    print("\n✅ Fight Club fully ingested!")
+    print("🔍 Check Neo4j Browser with: MATCH (m:Movie {title: 'Fight Club'})-[r]-(n) RETURN m, r, n")
