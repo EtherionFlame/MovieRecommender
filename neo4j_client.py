@@ -165,9 +165,175 @@ def create_studio_node(session, studio_data):
     except Exception as e:
         logger.error(f"Failed to create Studio node: {e}")
         return False
+def create_acted_in_relationship(session, person_tmdb_id, movie_tmdb_id, character, order):
+    """
+    Create ACTED_IN relationship between Person and Movie nodes
+
+    Args:
+        session: Active Neo4j session
+        person_tmdb_id (int): TMDB ID of the actor
+        movie_tmdb_id (int): TMDB ID of the movie
+        character (str): Character/role name
+        order (int): Billing order (0 = lead actor)
+
+    Returns:
+        bool: True if successful, False if error occurred
+    """
+    
+    try:
+        logger.debug(f"Creating ACTED_IN relationship: {person_tmdb_id} -> {movie_tmdb_id} on character {character}")
+        if not movie_tmdb_id:
+            logger.error("Cannot find movie node: No Id")
+            return False
+        if not person_tmdb_id:
+            logger.error("Cannot find person node: No Id")
+            return False
+        parameters = {
+            'person_id' : person_tmdb_id,
+            'movie_id' : movie_tmdb_id,
+            'character' : character,
+            'order' : order
+        }
+        query = """
+        MATCH (p:Person {tmdb_id: $person_id})
+        MATCH (m:Movie {tmdb_id: $movie_id})
+        MERGE (p)-[r:ACTED_IN]->(m)
+        SET r.character = $character, r.order = $order
+        """
+        session.run(query, parameters)
+        logger.info(f"Created ACTED_IN: Person {person_tmdb_id} -> Movie {movie_tmdb_id}")
+
+        return True
+    
+    except Exception as e:
+        logger.error(f"Failed to create ACTED_IN Relationship: {e}")
+        return False
+def create_directed_relationship(session, person_tmdb_id, movie_tmdb_id):
+    """
+    Create Directed relationship between Person and Movie nodes
+
+    Args:
+        session: Active Neo4j session
+        person_tmdb_id (int): TMDB ID of the director
+        movie_tmdb_id (int): TMDB ID of the movie
+
+
+    Returns:
+        bool: True if successful, False if error occurred
+    """
+    
+    try:
+        logger.debug(f"Creating Directed relationship: {person_tmdb_id} -> {movie_tmdb_id}")
+        if not movie_tmdb_id:
+            logger.error("Cannot find movie node: No Id")
+            return False
+        if not person_tmdb_id:
+            logger.error("Cannot find person node: No Id")
+            return False
+        parameters = {
+            'person_id' : person_tmdb_id,
+            'movie_id' : movie_tmdb_id,
+        }
+        query = """
+        MATCH (p:Person {tmdb_id: $person_id})
+        MATCH (m:Movie {tmdb_id: $movie_id})
+        MERGE (p)-[r:DIRECTED]->(m)
+        """
+        session.run(query, parameters)
+        logger.info(f"Created Directed: Person {person_tmdb_id} -> Movie {movie_tmdb_id}")
+
+        return True
+    
+    except Exception as e:
+        logger.error(f"Failed to create Directed Relationship: {e}")
+        return False
+    
+def create_in_genre_relationship(session, movie_tmdb_id, genre_name, is_primary=False):
+    """
+    Create IN_GENRE relationship between Movie and Genre nodes
+    
+    Args:
+        session: Active Neo4j session
+        movie_tmdb_id (int): TMDB ID of the movie
+        genre_name (str): Name of the genre (e.g., 'Drama', 'Action')
+        is_primary (bool): True if this is the primary/main genre
+    
+    Returns:
+        bool: True if successful, False if error occurred
+    """
+    try:
+        logger.debug(f"Creating IN_Genre relationship: {genre_name} -> {movie_tmdb_id}")
+        if not movie_tmdb_id:
+            logger.error("Cannot find movie node: No Id")
+            return False
+        if not genre_name:
+            logger.error("Cannot find Genre node: No Id")
+            return False
+        parameters = {
+            'genre_name' : genre_name,
+            'movie_id' : movie_tmdb_id,
+            'is_primary': is_primary
+        }
+        query = """
+        MATCH (m:Movie {tmdb_id: $movie_id})
+        MATCH (g:Genre {name: $genre_name})
+        MERGE (m)-[r:IN_GENRE]->(g)
+        SET r.is_primary = $is_primary
+        """
+        session.run(query, parameters)
+        logger.info(f"Created IN_GENRE: Movie {movie_tmdb_id} -> Genre {genre_name}")
+
+        return True
+    
+    except Exception as e:
+        logger.error(f"Failed to create IN_GENRE Relationship: {e}")
+        return False
+
+def create_produced_by_relationship(session, studio_id, movie_tmdb_id):
+    """
+    Create PRODUCED_BY relationship between Movie and Studio nodes
+    
+    Args:
+        session: Active Neo4j session
+        movie_tmdb_id (int): TMDB ID of the movie
+        studio_id (int): Studio ID from TMDB
+    
+    Returns:
+        bool: True if successful, False if error occurred
+    """
+    
+    try:
+        logger.debug(f"Creating PRODUCED_BY relationship: {studio_id} -> {movie_tmdb_id}")
+        if not movie_tmdb_id:
+            logger.error("Cannot find movie node: No Id")
+            return False
+        if not studio_id:
+            logger.error("Cannot find studio node: No Id")
+            return False
+        parameters = {
+            'studio_id' : studio_id,
+            'movie_id' : movie_tmdb_id,
+        }
+        query = """
+        MATCH (m:Movie {tmdb_id: $movie_id})
+        MATCH (s:Studio {id: $studio_id})
+        MERGE (m)-[r:PRODUCED_BY]->(s)
+        """
+        session.run(query, parameters)
+        logger.info(f"Created PRODUCED_BY: Studio {studio_id} -> Movie {movie_tmdb_id}")
+
+        return True
+    
+    except Exception as e:
+        logger.error(f"Failed to create Produced_By Relationship: {e}")
+        return False
+
 
 if __name__ == "__main__":
-    
+    """
+    Code to test node creation functions
+
+
     test_movie = {
         'tmdb_id': 550,
         'title': 'Fight Club',
@@ -215,3 +381,53 @@ if __name__ == "__main__":
     
     driver.close()
     print("\n✅ Check Neo4j Browser to verify!")
+    """
+
+    print("\n--- Testing Relationship ---")
+    driver = get_driver()
+
+    with driver.session() as session:
+        """# Create David Fincher node FIRST (if it doesn't exist)
+        print("Creating David Fincher node...")
+        fincher_data = {
+            'tmdb_id': 7467,
+            'name': 'David Fincher',
+            'profile_url': 'https://example.com/fincher.jpg'
+        }
+        success = create_person_node(session, fincher_data)
+        print(f"David Fincher node: {success}")
+        
+        # Now create the relationship
+        print("\nCreating DIRECTED relationship...")
+        success = create_directed_relationship(
+            session,
+            person_tmdb_id=7467,
+            movie_tmdb_id=550
+        )
+        print(f"DIRECTED relationship: {success}")
+        drama_genre = {'name': 'Drama'}
+        create_genre_node(session, drama_genre)
+
+        # Then create the relationship
+        success = create_in_genre_relationship(
+            session,
+            movie_tmdb_id=550,
+            genre_name='Drama',
+            is_primary=True
+        )
+        print(f"IN_GENRE relationship: {success}")"""
+        print("\n--- Testing IN_GENRE Relationship ---")
+
+        # Create Drama genre first
+        drama_genre = {'name': 'Drama'}
+        create_genre_node(session, drama_genre)
+
+        # Create relationship
+        success = create_in_genre_relationship(
+            session,
+            movie_tmdb_id=550,
+            genre_name='Drama',
+            is_primary=True
+        )
+        print(f"IN_GENRE relationship: {success}")
+    driver.close()
